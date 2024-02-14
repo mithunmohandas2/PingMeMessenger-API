@@ -5,7 +5,7 @@ const logger = require('morgan');
 const DBconnect = require('./bin/config')
 const dotenv = require('dotenv').config()
 
-const adminRouter = require('./routes/adminRoutes');
+const chatRouter = require('./routes/chatRoutes');
 const userRouter = require('./routes/userRoutes');
 const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
 
@@ -44,7 +44,7 @@ app.get('/api', (req, res) => res.status(200).json({ message: 'API initialized s
 
 
 app.use("/api/user", userRouter);
-app.use('/admin', adminRouter);
+app.use('/api/chat', chatRouter);
 
 app.use(notFound)
 app.use(errorHandler)

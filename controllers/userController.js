@@ -1,6 +1,6 @@
 const User = require('../models/userModel');
-const dotenv = require('dotenv');
 const asyncHandler = require('express-async-handler');
+const dotenv = require('dotenv');
 const generateToken = require("../config/generateToken");
 const { verifyHashData, hashData } = require('../config/encryptService');
 
@@ -11,7 +11,7 @@ const test = async (req, res) => {
 // .................Register User - Signup.....................
 
 const registerUser = asyncHandler(async (req, res) => {
-    // console.log(req.body)  //test 
+    console.log(req.body)  //test 
     const { name, email, password } = req.body
     if (!email || !name || !password) {
         res.status(400).json({ message: "Please fill all input fields" });
@@ -52,7 +52,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
-        return res.status(400).json({ error: "Please fill all input fields" })
+        return res.status(400).json({ message: "Please fill all input fields" })
     }
     const userData = await User.findOne({ email });
     if (userData && (await verifyHashData(password, userData.password))) {  //user found in database
@@ -70,6 +70,20 @@ const loginUser = asyncHandler(async (req, res) => {
     } else res.status(400).json({ message: "Invalid Credentials" })
 })
 
+// .................list all users.......................
+
+const listUsers = asyncHandler(async (req, res) => {
+    const startLetter = (req?.query?.search || "")
+    const regex = new RegExp(`^${startLetter}`, 'i');
+    const users = await User.find({ $or: [{ name: { $regex: regex } }, { email: { $regex: regex } }] });  
+    if (users) {
+        res.status(200).json({
+            message: "User details",
+            data: users
+        })
+    }
+})
+
 
 // .................Upload User Profile Picture........................
 
@@ -81,10 +95,10 @@ const uploadPhoto = async (req, res) => {
         const imagePath = '/images/' + req.file.filename
         const user = await User.findOne({ _id: req.body._id });
         if (!user) {
-            return res.status(400).json({ error: "User not found" }) // no user found in database
+            return res.status(400).json({ message: "User not found" }) // no user found in database
         }
-        const profilePicUpdate = await User.updateOne({ _id: req.body._id }, { $set: { image: imagePath } });
-        if (profilePicUpdate) {
+        const imageUpdate = await User.updateOne({ _id: req.body._id }, { $set: { image: imagePath } });
+        if (imageUpdate) {
             const updatedUser = await User.findOne({ _id: req.body._id });
             res.status(200).json({
                 _id: updatedUser._id,
@@ -98,7 +112,7 @@ const uploadPhoto = async (req, res) => {
 
     } catch (error) {
         console.log(error.message)
-        res.status(500).json({ error: error.message })
+        res.status(500).json({ message: error.message })
     }
 }
 
@@ -111,7 +125,7 @@ const updateUser = async (req, res) => {
         const updatedData = req.body    //form data recieved
 
         let users = await User.findByIdAndUpdate(_id, updatedData, { new: true });
-        if (!users) return res.json({ error: 'User not found' });
+        if (!users) return res.json({ message: 'User not found' });
         // res.status(200).json(users)
 
         const updatedUser = await User.findOne({ _id });
@@ -125,24 +139,10 @@ const updateUser = async (req, res) => {
 
     } catch (error) {
         console.log(error.message);
-        res.status(500).json({ error: error.message })
+        res.status(500).json({ message: error.message })
     }
 }
 
-// .................Search Users.........................
-
-const userSearch = async (req, res) => {
-    try {
-        const startLetter = req.body.searchData
-        const regex = new RegExp(`^${startLetter}`, 'i');
-        const users = await User.find({ name: { $regex: regex } });   //find user with starting letter
-        res.status(200).json(users)
-
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ error: error.message })
-    }
-}
 
 // -----------------delete User-------------------------
 
@@ -154,7 +154,7 @@ const deleteUser = async (req, res) => {
 
     } catch (error) {
         console.log(error.message);
-        res.status(500).json({ error: error.message })
+        res.status(500).json({ message: error.message })
     }
 }
 
@@ -163,8 +163,8 @@ module.exports = {
     test,
     registerUser,
     loginUser,
+    listUsers,
     uploadPhoto,
     updateUser,
-    userSearch,
     deleteUser,
 }

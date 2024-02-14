@@ -1,14 +1,15 @@
 const express = require('express');
-const user_router = express.Router();
+const userRouter = express.Router();
 const userController = require('../controllers/userController');
 const imageContoller = require('../controllers/imageController');
-const auth = require("../middlewares/auth")
+const {protect} = require("../middlewares/auth")
 
 
 //Routes
-user_router.post('/register', userController.registerUser);
-user_router.post('/login', userController.loginUser);
-user_router.get('/test', userController.test)
-user_router.post('/uploadPhoto', auth.verifyToken, imageContoller.upload.single('profilePic'), userController.uploadPhoto);
+userRouter.get('/test', userController.test)
+userRouter.post('/register', userController.registerUser);
+userRouter.post('/login', userController.loginUser);
+userRouter.get('/all', protect, userController.listUsers)
+userRouter.post('/uploadPhoto', protect, imageContoller.upload.single('profilePic'), userController.uploadPhoto);
 
-module.exports = user_router;
+module.exports = userRouter;

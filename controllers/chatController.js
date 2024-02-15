@@ -15,7 +15,7 @@ const accessChat = asyncHandler(async (req, res) => {
     const receiver = userId
 
     //check for existing chat
-    let isChat = await Chat.find({
+    const isChat = await Chat.find({
         isGroup: false,
         $and: [
             { users: { $in: [sender] } },
@@ -23,15 +23,16 @@ const accessChat = asyncHandler(async (req, res) => {
         ]
     }).populate("users", "-password").populate("latestMessage")
 
-    isChat = await User.populate(isChat, {
+    //populate user details for latest message
+    const existingChat = await User.populate(isChat, {
         path: "latestMessage.sender",
         select: "name email image",
     })
 
-    if (isChat?.length > 0) {
+    if (existingChat?.length > 0) {
         res.status(200).json({
             message: "chat details",
-            data: isChat[0]
+            data: existingChat[0]
         })
     } else {
         //Case: No chat data present 
@@ -60,7 +61,19 @@ const accessChat = asyncHandler(async (req, res) => {
 
 const getChats = asyncHandler(async (req, res) => {
     try {
-        const fullChat = await Chat.find({ users: { $in: [req.user._id] } }).populate("users", "-password")
+        //get all chats for a user
+        const chatlist = await Chat.find({ users: { $in: [req.user._id] } })
+            .populate("users", "-password")
+            .populate("groupAdmin", "-password")
+            .populate("latestMessage")
+            .sort({ updatedAt: -1 })
+
+        //populate user details for latest message
+        const fullChat = await User.populate(chatlist, {
+            path: "latestMessage.sender",
+            select: "name email image",
+        })
+
         res.status(200).json({
             message: "chat list",
             dataSize: fullChat?.length,
@@ -73,7 +86,69 @@ const getChats = asyncHandler(async (req, res) => {
 })
 
 
+// .................Create Group Chat.......................
+
+const createGroupChat = asyncHandler(async (req, res) => {
+    if (!req.body.users || !req.body.name) {
+        return res.status(400).json({ message: "Please fill all fields" })
+    }
+
+    // extract stringified users list
+    const users = JSON.parse(req.body.users)
+    if (users?.length < 2) {
+        //No adequate members for group
+        return res.status(400).json({ message: "More than 2 users required for group chat" })
+    }
+    users.push(req.user)  //adding current user
+
+    try {
+        const groupChat = new Chat({
+            chatName: req.body.name,
+            isGroup: true,
+            users,
+            groupAdmin: req.user._id
+        });
+        const newGroupChat = await groupChat.save();  //new group chat created
+
+        const fullGroupChat = await Chat.findOne({ _id: newGroupChat._id })
+            .populate("users", "-password")
+            .populate("groupAdmin", "-password")
+
+        res.status(200).json({
+            message: "new group chat details",
+            data: fullGroupChat
+        })
+
+    } catch (error) {
+        res.status(400).json({ message: error?.message });
+        throw new Error(error?.message)
+    }
+})
+
+
+// .................Rename Group Chat.......................
+
+const renameGroupChat = asyncHandler(async (req, res) => {
+    const { chatId, chatName } = req.body;
+    if (!chatId || !chatName) {
+        return res.status(400).json({ message: "Please fill all fields" })
+    }
+
+    const updatedChat = await Chat.findByIdAndUpdate(chatId, { chatName }, { new: true })
+        .populate("users", "-password")
+        .populate("groupAdmin", "-password");
+
+    if (!updatedChat) {
+        res.status(404).json({ message: "Chat not found" })
+        throw new Error("Chat not found");
+    } else {
+        res.status(200).json({ message: "Chat name updated", data: updatedChat });
+    }
+});
+
 module.exports = {
     accessChat,
     getChats,
+    createGroupChat,
+    renameGroupChat,
 }

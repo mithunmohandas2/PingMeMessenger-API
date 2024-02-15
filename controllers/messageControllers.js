@@ -21,7 +21,7 @@ const sendMessage = asyncHandler(async (req, res) => {
         const savedMessage = await newMessage.save(); //new Message created
         const messageSenderData = await User.populate(savedMessage, { path: "sender", select: "name image" });
         const messageChatData = await Chat.populate(messageSenderData, { path: "chat" })
-        const messageFullData = await User.populate(messageChatData, { path: "chat.users", select: "name image" });
+        const messageFullData = await User.populate(messageChatData, { path: "chat.users", select: "name image email" });
 
         //update latest message
         await Chat.findByIdAndUpdate(chatId, {
@@ -43,7 +43,25 @@ const sendMessage = asyncHandler(async (req, res) => {
 // ------------------- Get Message --------------
 
 const getMessages = asyncHandler(async (req, res) => {
+    const { chatId } = req.params
+    if (!chatId) {
+        return res.status(400).json({ message: "Invalid request received" });
+    }
+    try {
+        const messages = await Message.find({ chat: chatId })
+            .populate("sender", "name email image")
+            .populate("chat")
 
+        res.status(200).json({
+            message: "message sent",
+            dataSize: messages.length,
+            data: messages
+        })
+
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+        throw new Error(error.message);
+    }
 })
 
 module.exports = {

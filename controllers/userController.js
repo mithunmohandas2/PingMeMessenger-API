@@ -75,10 +75,11 @@ const loginUser = asyncHandler(async (req, res) => {
 const listUsers = asyncHandler(async (req, res) => {
     const startLetter = (req?.query?.search || "")
     const regex = new RegExp(`^${startLetter}`, 'i');
-    const users = await User.find({ $or: [{ name: { $regex: regex } }, { email: { $regex: regex } }] });  
+    const users = await User.find({ $or: [{ name: { $regex: regex } }, { email: { $regex: regex } }] });
     if (users) {
         res.status(200).json({
             message: "User details",
+            dataSize: users?.length,
             data: users
         })
     }

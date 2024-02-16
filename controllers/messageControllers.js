@@ -2,16 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Message = require("../models/messageModel");
 const User = require("../models/userModel");
 const Chat = require("../models/chatModel");
-const Pusher = require("pusher");
-
-//push notification
-const pusher = new Pusher({
-    appId: "1757322",
-    key: "16e733f7e85eeba8dc9f",
-    secret: "a665f01592cbe9521c9b",
-    cluster: "ap2",
-    useTLS: true
-});
+const { pusher } = require("../config/pusherService");
 
 // ----------------------Send Message --------------
 

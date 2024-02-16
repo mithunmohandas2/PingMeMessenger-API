@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const DBconnect = require('./bin/config')
 const dotenv = require('dotenv').config()
+const cors = require('cors');
 
 const chatRouter = require('./routes/chatRoutes');
 const userRouter = require('./routes/userRoutes');
@@ -13,6 +14,7 @@ const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
 const app = express();
 
 //CORS Policy
+app.use(cors()); // Enable CORS for all routes
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*'); //allow all origin (temporary)
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');

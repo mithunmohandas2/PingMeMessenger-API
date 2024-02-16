@@ -2,6 +2,16 @@ const asyncHandler = require("express-async-handler");
 const Message = require("../models/messageModel");
 const User = require("../models/userModel");
 const Chat = require("../models/chatModel");
+const Pusher = require("pusher");
+
+//push notification
+const pusher = new Pusher({
+    appId: "1757322",
+    key: "16e733f7e85eeba8dc9f",
+    secret: "a665f01592cbe9521c9b",
+    cluster: "ap2",
+    useTLS: true
+});
 
 // ----------------------Send Message --------------
 
@@ -22,6 +32,11 @@ const sendMessage = asyncHandler(async (req, res) => {
         const messageSenderData = await User.populate(savedMessage, { path: "sender", select: "name image" });
         const messageChatData = await Chat.populate(messageSenderData, { path: "chat" })
         const messageFullData = await User.populate(messageChatData, { path: "chat.users", select: "name image email" });
+
+        //push notification
+        pusher.trigger(`${chatId}`, "new-message", {
+            data: messageFullData
+        });
 
         //update latest message
         await Chat.findByIdAndUpdate(chatId, {
@@ -53,7 +68,7 @@ const getMessages = asyncHandler(async (req, res) => {
             .populate("chat")
 
         res.status(200).json({
-            message: "message sent",
+            message: "message list",
             dataSize: messages.length,
             data: messages
         })

@@ -1,6 +1,20 @@
 # PingMe Messenger API Project Overview
 This is the bankend of a PingMe Messenger full-stack real-time messaging application project created by Mithun Mohandas. Its a collaboration of Express, Node, MongoDB. It used Pusher library to show realtime updates of messages with full duplex communication.
 
+## Key Features : 
+ API Integration Setup:
+Implemented Pusher library service for real-time conversations.
+
+User Authentication:
+Integrated a streamlined user authentication system requiring a unique email and password for accessing chat application.
+
+Session Management:
+Leveraged JWT based Session management to improve efficiency of server.
+
+Cloud Database:
+Utilised the capabilities of MongoBD Atlas to host the database to the cloud and access the data seamlessly.
+
+
 ## Getting Started
 To get the project up and running on your local machine, follow these steps:
 

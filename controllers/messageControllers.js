@@ -22,12 +22,16 @@ const sendMessage = asyncHandler(async (req, res) => {
         const savedMessage = await newMessage.save(); //new Message created
         const messageSenderData = await User.populate(savedMessage, { path: "sender", select: "name image" });
         const messageChatData = await Chat.populate(messageSenderData, { path: "chat" })
-        const messageFullData = await User.populate(messageChatData, { path: "chat.users", select: "name image email" });
+        const messageFullData = await User.populate(messageChatData, { path: "chat.users", select: "name image email _id" });
 
-        //push notification
-        pusher.trigger(`${chatId}`, "new-message", {
-            data: messageFullData
-        });
+        messageChatData.chat.users.map((user) => {
+            if (user._id !== req.user._id) {
+                //push notification initiate to other users
+                pusher.trigger(`${user._id}`, "new-message", {
+                    data: messageFullData
+                });
+            }
+        })
 
         //update latest message
         await Chat.findByIdAndUpdate(chatId, {
